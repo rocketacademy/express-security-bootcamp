@@ -184,7 +184,7 @@ app.post('/login', (request, response) => {
  * ===============================
  */
 
-app.get('/user/edit', (request, response) => {
+app.get('/user/edit', checkAuth, (request, response) => {
   response.send(`
     <html>
       <body>
@@ -199,11 +199,11 @@ app.get('/user/edit', (request, response) => {
   `);
 });
 
-app.get('/user/edit', (request, response) => {
+app.get('/user/edit', checkAuth, (request, response) => {
 
   const values = [
-    request.body.email,
-    getHash(request.body.password),
+    request.query.email,
+    getHash(request.query.password),
     request.cookies.userId
   ];
 
