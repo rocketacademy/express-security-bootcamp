@@ -29,9 +29,9 @@ if (process.env.DATABASE_URL) {
 } else {
   // this is the same value as before
   pgConnectionConfigs = {
-    user: 'akira',
+    user: '<YOUR_UNIX_USERNAME>',
     host: 'localhost',
-    database: 'foobar',
+    database: '<YOUR_UNIX_USERNAME>',
     port: 5432,
   };
 }
