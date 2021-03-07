@@ -289,7 +289,10 @@ app.get('/cats/new', (request, response) => {
 // get one cat
 app.get('/cats/:id', (request, response) => {
 
-  pool.query('SELECT * from cats WHERE id='+request.params.id)
+  const query = 'SELECT * from cats WHERE id='+request.params.id;
+  console.log( query );
+
+  pool.query(query)
     .then((result) => {
 
       const cat = result.rows[0];
@@ -308,6 +311,22 @@ app.get('/cats/:id', (request, response) => {
       response.status(503).send('sorry');
     });
 });
+
+app.get('/api/cats/:name', (request, response) => {
+
+  const query = "SELECT name, type from cats WHERE name='"+request.params.name+"'";;
+  console.log( query );
+
+  pool.query(query)
+    .then((result) => {
+      response.send( result.rows );
+    }).catch((error) => {
+      console.log('Error executing query', error.stack);
+      response.status(503).send('sorry');
+    });
+});
+
+
 
 /*
  * ===============================

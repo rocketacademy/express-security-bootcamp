@@ -7,4 +7,4 @@ INSERT INTO users (email, password) VALUES ('jai@ra.com', '3c9909afec25354d551da
 INSERT INTO cats (name, type, user_id) VALUES ('Mr. Snuggles', 'Calico', 1);
 INSERT INTO cats (name, type, user_id) VALUES ('Jake AlPurrrrtsen', 'Bambino', 1);
 INSERT INTO cats (name, type, user_id) VALUES ('Furry Mc Furmeister', 'Persian', 1);
-INSERT INTO cats (name, type, user_id) VALUES ('Kai', 'LaPerm', 2);
+INSERT INTO cats (name, type, user_id) VALUES ('kai', 'LaPerm', 2);
