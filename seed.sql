@@ -1,4 +1,7 @@
-INSERT INTO cats (name, type, weight) VALUES ('Mr. Snuggles', 'Calico', 327);
-INSERT INTO cats (name, type, weight) VALUES ('Jake AlPurrrrtsen', 'Bambino', 424);
-INSERT INTO cats (name, type, weight) VALUES ('Furry Mc Furmeister', 'Persian', 512);
-INSERT INTO cats (name, type, weight) VALUES ('Kai', 'LaPerm', 387);
+INSEWRT INTO users (email, password) VALUES ('kai@ra.com', '3c9909afec25354d551dae21590bb26e38d53f2173b8d3dc3eee4c047e7ab1c1eb8b85103e3be7ba613b31bb5c9c36214dc9f14a42fd7a2fdb84856bca5c44c2');
+INSEWRT INTO users (email, password) VALUES ('jai@ra.com', '3c9909afec25354d551dae21590bb26e38d53f2173b8d3dc3eee4c047e7ab1c1eb8b85103e3be7ba613b31bb5c9c36214dc9f14a42fd7a2fdb84856bca5c44c2');
+
+INSERT INTO cats (name, type, weight, user_id) VALUES ('Mr. Snuggles', 'Calico', 327, 1);
+INSERT INTO cats (name, type, weight, user_id) VALUES ('Jake AlPurrrrtsen', 'Bambino', 424, 1);
+INSERT INTO cats (name, type, weight, user_id) VALUES ('Furry Mc Furmeister', 'Persian', 512, 1);
+INSERT INTO cats (name, type, weight, user_id) VALUES ('Kai', 'LaPerm', 387, 2);

@@ -1,10 +1,18 @@
 import express from 'express';
-const app = express();
-
 import pg from 'pg';
-const { Pool } = pg;
+import jsSHA from 'jssha';
 
-const PORT = process.env.PORT || 3004;
+/*
+ * ===============================
+ * ===============================
+ * ===============================
+    POSTGRES
+ * ===============================
+ * ===============================
+ * ===============================
+ */
+
+const { Pool } = pg;
 
 let pgConnectionConfigs;
 
@@ -26,28 +34,142 @@ if (process.env.DATABASE_URL) {
 
 const pool = new Pool(pgConnectionConfigs);
 
-app.get('/', (request, response) => {
-  console.log('request came in');
-  response.send('yay');
+/*
+ * ===============================
+ * ===============================
+ * ===============================
+    EXPRESS CONFIG
+ * ===============================
+ * ===============================
+ * ===============================
+ */
+
+const app = express();
+
+app.use(express.urlencoded({ extended: false }));
+
+const PORT = process.env.PORT || 3004;
+
+/*
+ * ===============================
+ * ===============================
+ * ===============================
+    USER AUTH
+ * ===============================
+ * ===============================
+ * ===============================
+ */
+
+const getHash = (input) => {
+  const shaObj = new jsSHA('SHA-512', 'TEXT', { encoding: 'UTF8' });
+  shaObj.update(input);
+  return shaObj.getHash('HEX');
+}
+
+
+const checkAuth = (request, response, next) => {
+  // set the default value
+  request.isUserLoggedIn = false;
+
+  // check to see if the cookies you need exists
+  if (request.cookies.loggedInHash && request.cookies.userId) {
+    // get the hased value that should be inside the cookie
+    const hash = getHash(request.cookies.userId);
+
+    // test the value of the cookie
+    if (request.cookies.loggedInHash === hash) {
+      request.isUserLoggedIn = true;
+    }
+  }
+  next();
+};
+
+/*
+ * ===============================
+ * ===============================
+ * ===============================
+    EXPRESS ROUTES
+ * ===============================
+ * ===============================
+ * ===============================
+ */
+
+app.get('/register', (request, response) => {
+  response.send(`
+    <html>
+      <body>
+        <form action="/register" method="POST">
+          <input type="text" name="email"/>
+          <input type="text" name="password"/>
+          <input type="submit"/>
+        </form>
+      </body>
+    </html>
+  `);
 });
 
-app.get('/banana', (request, response) => {
-  console.log('request came in');
+app.post('/register', (request, response) => {
 
-  const whenDoneWithQuery = (error, result) => {
-    if (error) {
+  const values = [request.body.email, getHash(request.body.password)];
+
+  pool.query('INSERT INTO users (email, password) VALUES ($1, $2)', values)
+    .then((result) => {
+      response.send('done');
+    }).catch((result) => {
       console.log('Error executing query', error.stack);
-      response.status(503).send(result.rows);
-      return;
-    }
+      response.status(503).send('sorry');
+    });
+});
 
-    console.log(result.rows[0].name);
+app.get('/login', (request, response) => {
+  response.send(`
+    <html>
+      <body>
+        <form action="/login" method="POST">
+          <input type="text" name="email"/>
+          <input type="text" name="password"/>
+          <input type="submit"/>
+        </form>
+      </body>
+    </html>
+  `);
+});
 
-    response.send(result.rows);
-  };
+app.post('/login', (request, response) => {
 
-  // Query using pg.Pool instead of pg.Client
-  pool.query('SELECT * from cats', whenDoneWithQuery);
+  pool.query('SELECT * from users WHERE email=$1', [request.body.email])
+    .then((result) => {
+      // console.log(result.rows[0].name);
+      if( result.rows.length === 0 ){
+        response.status(403).send('sorry');
+      }
+
+      const user = result.rows[0];
+
+      if( user.password !=== getHash(request.body.password) ){
+        response.status(403).send('sorry');
+      }
+
+      response.cookie('loggedInHash', hashedCookieString);
+      response.cookie('userId', user.id);
+      response.send('worked');
+
+    }).catch((result) => {
+      console.log('Error executing query', error.stack);
+      response.status(503).send('sorry');
+    });
+});
+
+app.get('/', (request, response) => {
+
+  pool.query('SELECT * from cats')
+    .then((result) => {
+      // console.log(result.rows[0].name);
+      response.send(result.rows);
+    }).catch((result) => {
+      console.log('Error executing query', error.stack);
+      response.status(503).send('sorry');
+    });
 });
 
 app.listen(PORT);
