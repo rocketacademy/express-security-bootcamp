@@ -1,6 +1,7 @@
 import express from 'express';
 import pg from 'pg';
 import jsSHA from 'jssha';
+import cookieParser from 'cookie-parser';
 
 /*
  * ===============================
@@ -25,9 +26,9 @@ if (process.env.DATABASE_URL) {
 } else {
   // this is the same value as before
   pgConnectionConfigs = {
-    user: '<MY_UNIX_USERNAME>',
+    user: 'akira',
     host: 'localhost',
-    database: '<MY_UNIX_USERNAME>',
+    database: 'foobar',
     port: 5432,
   };
 }
@@ -47,6 +48,8 @@ const pool = new Pool(pgConnectionConfigs);
 const app = express();
 
 app.use(express.urlencoded({ extended: false }));
+
+app.use(cookieParser());
 
 const PORT = process.env.PORT || 3004;
 
@@ -94,13 +97,16 @@ const checkAuth = (request, response, next) => {
  * ===============================
  */
 
+const navbar = `<p>navbar🥖<a href="/">home</a>🥖<a href="/dashboard">dashboard</a>🥖<a href="/user/edit">edit your profile</a>🥖<a href="/login">login</a>🥖<a href="/register">register</a>`;
+
 app.get('/register', (request, response) => {
   response.send(`
     <html>
       <body>
+        ${navbar}
         <form action="/register" method="POST">
-          <input type="text" name="email"/>
-          <input type="text" name="password"/>
+          email <input type="text" name="email"/>
+          🔴passowrd <input type="text" name="password"/>
           <input type="submit"/>
         </form>
       </body>
@@ -115,7 +121,7 @@ app.post('/register', (request, response) => {
   pool.query('INSERT INTO users (email, password) VALUES ($1, $2)', values)
     .then((result) => {
       response.send('done');
-    }).catch((result) => {
+    }).catch((error) => {
       console.log('Error executing query', error.stack);
       response.status(503).send('sorry');
     });
@@ -125,9 +131,10 @@ app.get('/login', (request, response) => {
   response.send(`
     <html>
       <body>
+        ${navbar}
         <form action="/login" method="POST">
-          <input type="text" name="email"/>
-          <input type="text" name="password"/>
+          email <input type="text" name="email"/>
+          🔴passowrd <input type="text" name="password"/>
           <input type="submit"/>
         </form>
       </body>
@@ -146,27 +153,118 @@ app.post('/login', (request, response) => {
 
       const user = result.rows[0];
 
-      if( user.password !=== getHash(request.body.password) ){
+      if( user.password !== getHash(request.body.password) ){
         response.status(403).send('sorry');
       }
 
-      response.cookie('loggedInHash', hashedCookieString);
+      response.cookie('loggedInHash', getHash(user.id)); // not salted, fix later
       response.cookie('userId', user.id);
       response.send('worked');
 
-    }).catch((result) => {
+    }).catch((error) => {
       console.log('Error executing query', error.stack);
       response.status(503).send('sorry');
     });
 });
 
+app.get('/user/edit', (request, response) => {
+  response.send(`
+    <html>
+      <body>
+        ${navbar}
+        <form action="/user/edit">
+          email <input type="text" name="email"/>
+          🔴password <input type="text" name="password"/>
+          <input type="submit"/>
+        </form>
+      </body>
+    </html>
+  `);
+});
+
+app.get('/user/edit', (request, response) => {
+
+  const values = [
+    request.body.email,
+    getHash(request.body.password),
+    request.cookies.userId
+  ];
+
+  pool.query('UPDATE users SET email=$1 password=$2 WHERE id=$3', values)
+    .then((result) => {
+      response.send('done');
+    }).catch((error) => {
+      console.log('Error executing query', error.stack);
+      response.status(503).send('sorry');
+    });
+});
+
+app.get('/dashboard', checkAuth, (request, response) => {
+
+  if( request.isUserLoggedIn === false ){
+    return response.status(403).send('sorry');
+  }
+
+  pool.query('SELECT * from cats WHERE user_id=$1', [request.cookies.userId])
+    .then((result) => {
+      const cats = result.rows.map(cat => `<p><a href="/cats/${cat.id}">${cat.id}|${cat.name}</a></p>`);
+
+      response.send(`
+          <html>
+            <body>
+              ${navbar}
+              ${cats.join('')}
+            </body>
+          </html>
+        `);
+
+    }).catch((error) => {
+      console.log('Error executing query', error.stack);
+      response.status(503).send('sorry');
+    });
+});
+
+app.get('/cats/:id', (request, response) => {
+
+  pool.query('SELECT * from cats WHERE id='+request.params.id)
+    .then((result) => {
+
+      const cat = result.rows[0];
+
+      response.send(`
+          <html>
+            <body>
+              ${navbar}
+              <p>${cat.id} | ${cat.name} | ${cat.type}</p>
+            </body>
+          </html>
+        `);
+
+    }).catch((error) => {
+      console.log('Error executing query', error.stack);
+      response.status(503).send('sorry');
+    });
+});
+
+
+
 app.get('/', (request, response) => {
 
   pool.query('SELECT * from cats')
     .then((result) => {
-      // console.log(result.rows[0].name);
-      response.send(result.rows);
-    }).catch((result) => {
+
+      const cats = result.rows.map(cat => `<p><a href="/cats/${cat.id}">${cat.id}|${cat.name}</a></p>`);
+
+      response.send(`
+          <html>
+            <body>
+              ${navbar}
+              ${cats.join('')}
+            </body>
+          </html>
+        `);
+
+    }).catch((error) => {
       console.log('Error executing query', error.stack);
       response.status(503).send('sorry');
     });
