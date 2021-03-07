@@ -314,7 +314,7 @@ app.get('/cats/:id', (request, response) => {
 
 app.get('/api/cats/:name', (request, response) => {
 
-  const query = "SELECT name, type from cats WHERE name='"+request.params.name+"'";;
+  const query = "SELECT name, type from cats WHERE name='"+request.params.name+"'";
   console.log( query );
 
   pool.query(query)
