@@ -97,7 +97,14 @@ const checkAuth = (request, response, next) => {
  * ===============================
  */
 
-const navbar = `<p>navbar🥖<a href="/">home</a>🥖<a href="/dashboard">dashboard</a>🥖<a href="/user/edit">edit your profile</a>🥖<a href="/login">login</a>🥖<a href="/register">register</a>`;
+const navbar = `<p>navbar🥖<a href="/">home</a>🥖<a href="/dashboard">dashboard</a>🥖<a href="/cats/new">new cat</a>🥖<a href="/user/edit">edit your profile</a>🥖<a href="/login">login</a>🥖<a href="/register">register</a>`;
+
+
+/*
+ * ===============================
+    User Auth
+ * ===============================
+ */
 
 app.get('/register', (request, response) => {
   response.send(`
@@ -157,8 +164,9 @@ app.post('/login', (request, response) => {
         response.status(403).send('sorry');
       }
 
-      response.cookie('loggedInHash', getHash(user.id)); // not salted, fix later
+      response.cookie('loggedInHash', getHash(`${user.id}`)); // not salted, fix later
       response.cookie('userId', user.id);
+
       response.send('worked');
 
     }).catch((error) => {
@@ -166,6 +174,12 @@ app.post('/login', (request, response) => {
       response.status(503).send('sorry');
     });
 });
+
+/*
+ * ===============================
+    User Edit
+ * ===============================
+ */
 
 app.get('/user/edit', (request, response) => {
   response.send(`
@@ -199,6 +213,12 @@ app.get('/user/edit', (request, response) => {
     });
 });
 
+/*
+ * ===============================
+    Dashboard
+ * ===============================
+ */
+
 app.get('/dashboard', checkAuth, (request, response) => {
 
   if( request.isUserLoggedIn === false ){
@@ -224,6 +244,46 @@ app.get('/dashboard', checkAuth, (request, response) => {
     });
 });
 
+/*
+ * ===============================
+    Cats
+ * ===============================
+ */
+
+app.post('/cats', checkAuth, (request, response) => {
+
+  if( request.isUserLoggedIn === false ){
+    return response.status(403).send('sorry');
+  }
+
+  const values = [request.body.name, request.body.type, request.cookies.userId];
+
+  pool.query('INSERT INTO cats (name, type, user_id) VALUES ($1, $2, $3)', values)
+    .then((result) => {
+      response.send('done');
+    }).catch((error) => {
+      console.log('Error executing query', error.stack);
+      response.status(503).send('sorry');
+    });
+});
+
+// render a form to create a cat
+app.get('/cats/new', (request, response) => {
+  response.send(`
+    <html>
+      <body>
+        ${navbar}
+        <form action="/cats" method="POST">
+          name <input type="text" name="name"/>
+          🔴type <input type="text" name="type"/>
+          <input type="submit"/>
+        </form>
+      </body>
+    </html>
+  `);
+});
+
+// get one cat
 app.get('/cats/:id', (request, response) => {
 
   pool.query('SELECT * from cats WHERE id='+request.params.id)
@@ -246,7 +306,11 @@ app.get('/cats/:id', (request, response) => {
     });
 });
 
-
+/*
+ * ===============================
+    Homepage
+ * ===============================
+ */
 
 app.get('/', (request, response) => {
 
