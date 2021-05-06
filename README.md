@@ -1,8 +1,8 @@
-# SWE1: Software Engineering Foundations
+# Rocket Academy Coding Bootcamp
 
-# security
+## Express Security
 
-## deployment
+### Deployment
 
 ```
 heroku addons:create heroku-postgresql:hobby-dev
