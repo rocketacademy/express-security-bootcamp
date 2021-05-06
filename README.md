@@ -1,8 +1,6 @@
-# Rocket Academy Coding Bootcamp
+# Rocket Academy Coding Bootcamp: Express Security
 
-## Express Security
-
-### Deployment
+## Deployment
 
 ```
 heroku addons:create heroku-postgresql:hobby-dev
